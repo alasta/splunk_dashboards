@@ -24,3 +24,7 @@ Source : Alasta
 ## splunk_search_activity.xml
 Search activity
 Source : https://gosplunk.com/splunk-dashboard-that-displays-user-searches/
+
+### indexes_informations.xml
+Indexes informations
+Source : Alasta
