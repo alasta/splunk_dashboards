@@ -28,3 +28,7 @@ Source : https://gosplunk.com/splunk-dashboard-that-displays-user-searches/
 ### indexes_informations.xml
 Indexes informations
 Source : Alasta
+
+## hosts_uf.xml
+UF informations
+Source : Alasta
