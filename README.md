@@ -20,3 +20,7 @@ Source : ?
 ## users_connections.xml
 Users connections/informations
 Source : Alasta
+
+## splunk_search_activity.xml
+Search activity
+Source : https://gosplunk.com/splunk-dashboard-that-displays-user-searches/
