@@ -16,3 +16,7 @@ Source : ?
 ## data_usage.xml
 Data usage informations
 Source : ?
+
+## users_connections.xml
+Users connections/informations
+Source : Alasta
