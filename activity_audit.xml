@@ -1,0 +1,417 @@
+<form>
+  <label>Activity Audit</label>
+  <fieldset submitButton="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label>Time Range</label>
+      <default>
+        <earliest>-60m@m</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="host" searchWhenChanged="true">
+      <label>Host (search head)</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="action" searchWhenChanged="true">
+      <label>Action</label>
+      <choice value="*">All</choice>
+      <fieldForLabel>action</fieldForLabel>
+      <fieldForValue>action</fieldForValue>
+      <search>
+        <query>index=_audit sourcetype=audittrail host=$host$ action=* 
+     | fields action 
+     | dedup action 
+     | table action 
+     | sort action</query>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </search>
+      <default>*</default>
+    </input>
+    <input type="text" token="action_pattern" searchWhenChanged="true">
+      <label>Action Pattern</label>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="info_message" searchWhenChanged="true">
+      <label>Info Message</label>
+      <choice value="*">All</choice>
+      <choice value="NULL">NULL</choice>
+      <default>*</default>
+      <fieldForLabel>info</fieldForLabel>
+      <fieldForValue>info</fieldForValue>
+      <search>
+        <query>index=_audit sourcetype=audittrail host=$host$ action=* 
+     | fields info 
+     | dedup info 
+     | table info 
+     | sort info
+     | search NOT info="app=*"</query>
+        <earliest>-30d@d</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="text" token="info_message_pattern" searchWhenChanged="true">
+      <label>Info Message Pattern</label>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="user" searchWhenChanged="true">
+      <label>User</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <fieldForLabel>user</fieldForLabel>
+      <fieldForValue>user</fieldForValue>
+      <search>
+        <query>index=_audit sourcetype=audittrail host=$host$ action=* 
+     | fields user 
+     | dedup user 
+     | table user 
+     | sort user</query>
+      </search>
+    </input>
+    <input type="text" token="user_pattern" searchWhenChanged="true">
+      <label>User Pattern</label>
+      <default>*</default>
+    </input>
+    <input type="text" token="user_list" searchWhenChanged="true">
+      <label>User List (comma seperated)</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Current Time</title>
+      <table>
+        <search>
+          <query>| makeresults 
+     | eval _time=now()
+     | table _time</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Last Login Attempt</title>
+      <table>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ action="login attempt"
+     | fields _time user action info
+     | fillnull value=NULL
+     | search info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | sort -_time 
+     | dedup user 
+     | table _time user action info 
+     | sort user</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="info">
+          <colorPalette type="map">{"succeeded":#79CA00,"failed":#D93F3C,"granted":#65A637,"completed":#A2CC3E,"canceled":#6DB7C6,"cancel":#6DB7C6,"denied":#D93F3C,"success":#B3E37D,"pause":#6DB7C6,"resume":#6DB7C6}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Last Action</title>
+      <table>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ 
+     | fields _time user action info
+     | fillnull value=NULL
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | sort -_time 
+     | dedup user 
+     | table _time user action info 
+     | sort user</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="info">
+          <colorPalette type="map">{"succeeded":#79CA00,"failed":#D93F3C,"granted":#65A637,"completed":#A2CC3E,"canceled":#6DB7C6,"cancel":#6DB7C6,"denied":#D93F3C,"success":#B3E37D,"pause":#6DB7C6,"resume":#6DB7C6,"NULL":#D1D1D1}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Active User Accounts</title>
+      <table>
+        <search>
+          <query>| rest /services/authentication/users splunk_server=local
+     | table defaultApp id realname email roles type splunk_server capabilities 
+     | replace "*%40*" with "*@*" in id 
+     | rex field=id "/users/(?&lt;user&gt;.+)$" 
+     | table user realname email type roles splunk_server 
+     | search user="$user$" user="*$user_pattern$*" user IN ($user_list$)</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="info">
+          <colorPalette type="map">{"succeeded":#79CA00,"failed":#D93F3C,"granted":#65A637,"completed":#A2CC3E,"canceled":#6DB7C6,"cancel":#6DB7C6,"denied":#D93F3C,"success":#B3E37D,"pause":#6DB7C6,"resume":#6DB7C6}</colorPalette>
+        </format>
+        <format type="color" field="type">
+          <colorPalette type="map">{"SAML":#A2CC3E,"Splunk":#F7BC38}</colorPalette>
+        </format>
+        <format type="color" field="roles">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="splunk_server">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Activity Timeline by Host</title>
+      <chart>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ 
+     | fields _time user action info host
+     | fillnull value=NULL 
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | fields _time host
+     | timechart count by host</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Activity Timeline by User</title>
+      <chart>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ 
+     | fields _time user action info user
+     | fillnull value=NULL 
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | fields _time user
+     | timechart count by user</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Activity Timeline by Action</title>
+      <chart>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ 
+     | fields _time user action info
+     | fillnull value=NULL 
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | fields _time action
+     | timechart count by action</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Top Host</title>
+      <table>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ 
+     | fields user action info host 
+     | fillnull value=NULL 
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | fields host
+     | top host limit=1000</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="host">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Top Users</title>
+      <table>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ a 
+     | fields user action info 
+     | fillnull value=NULL 
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | fields user
+     | top user limit=1000</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Top Actions</title>
+      <table>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ 
+     | fields user action info 
+     | fillnull value=NULL 
+     | search action="*$action$" action="$action_pattern$*" info="$info_message$" info="*$info_message_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | fields action 
+     | top action limit=1000</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Top Actions by User and Host</title>
+      <table>
+        <search>
+          <query>index=_audit sourcetype=audittrail host=$host$ action=$action$ action="*$action_pattern$*" user=$user$ user="*$user_pattern$*" user IN ($user_list$) 
+     | eval user_activity=host+"-"+user+"-"+action 
+     | top user_activity limit=1000</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="user">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="action">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="user_activity">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>
