@@ -32,3 +32,7 @@ Source : Alasta
 ## hosts_uf.xml
 UF informations
 Source : Alasta
+
+## hosts_events_evolution.xml
+Hosts events evolution
+Source : Alasta
