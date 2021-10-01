@@ -1,0 +1,62 @@
+
+<form theme="dark">
+  <label>Splunk Search Activity</label>
+  <fieldset submitButton="true" autoRun="false">
+    <input type="time" token="time1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="radio" token="exclude1" searchWhenChanged="true">
+      <label>Splunk System User</label>
+      <choice value="user!=splunk-system-user">exclude</choice>
+      <choice value="*">include</choice>
+      <default>user!=splunk-system-user</default>
+      <initialValue>user!=splunk-system-user</initialValue>
+    </input>
+    <input type="multiselect" token="user1">
+      <label>User</label>
+      <fieldForLabel>user1</fieldForLabel>
+      <fieldForValue>user</fieldForValue>
+      <search>
+        <query>index=_audit action=search 
+search!="'typeahead*" $exclude1$ | stats count by user</query>
+        <earliest>$time1.earliest$</earliest>
+        <latest>$time1.latest$</latest>
+      </search>
+      <choice value="*">all</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <delimiter> </delimiter>
+    </input>
+    <input type="text" token="filter1">
+      <label>Filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>index=_audit action=search search!="'typeahead*" user="$user1$" $filter1$ $exclude1$
+| stats count by _time user search total_run_time
+| sort -_time</query>
+          <earliest>$time1.earliest$</earliest>
+          <latest>$time1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>
