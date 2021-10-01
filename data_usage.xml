@@ -1,0 +1,62 @@
+
+<dashboard theme="dark">
+  <label>Data Usage</label>
+  <description>Dashboard to help see how much data is being used the past 7 days and to track how much each Forwarder is sending.</description>
+  <row>
+    <panel>
+      <title>Data Indexed in GB for Last 7 days.</title>
+      <table>
+        <search>
+          <query>index=_internal source=*license_usage.log type="RolloverSummary" | eval _time=_time - 43200 | bin _time span=1d | eval GB=round(b/1024/1024/1024, 3) | stats sum(GB) by host _time | sort -_time</query>
+          <earliest>-7d@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client License Usage information</title>
+      <table>
+        <title>Last 24 hours per host - click on host name to see Source and Sourcetype information.</title>
+        <search>
+          <query>index=_internal source=*license_usage.log | eval GB=b/1024/1024/1024 | stats sum(GB) by h | sort -sum(GB)</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="rowNumbers">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <set token="h">$click.value$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>$h$</title>
+      <table>
+        <title>Source/Sourcetype volume by GB in descending order. Clicking in a row will launch a new search to investigate further.</title>
+        <search>
+          <query>index=_internal source=*license_usage.log h="$h$" | eval GB=b/1024/1024/1024 | stats sum(GB) as volume_in_GB by idx s st | sort - volume_in_GB 
+| rename idx AS index s AS source st AS sourcetype</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">cell</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=index=$row.index$%20host=%22$h$%22%20source=%22$row.source$%22%20sourcetype=%22$row.sourcetype$%22&amp;earliest=-24h@h&amp;latest=now</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+</dashboard>
